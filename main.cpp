@@ -9,7 +9,7 @@ unsigned long long generateRandLong()
 {
     unsigned long long result = 0;
     int iters = rand() % 5+10;
-    for (int i = 0; i < iters; i++) {
+    for (size_t i = 0; i < iters; i++) {
         result += (rand() % 10) * pow(10, i);
     }
     return result;
@@ -58,26 +58,13 @@ class BinarySearchTree
 {
     public:
     Node* root = nullptr;
-    
-    bool isTreeEmpty()
-    {
-        if(root == nullptr)
-        {
-            return true;
-        }
-        return false;
-    }
-
     int realsize(Node* newNode)
     {
         if(newNode == nullptr)
         {
             return 0;
         }
-        else
-        {
-            return(realsize(newNode->left)+1+realsize(newNode->right));
-        }    
+          return(realsize(newNode->left)+1+realsize(newNode->right));  
     }
     int size()
     {
@@ -125,7 +112,6 @@ class BinarySearchTree
     {
         if (aNode == NULL)
         {
-            //cout << "ayf";
             aNode = new Node;
             aNode->data = data;
             root = aNode;
@@ -138,7 +124,7 @@ class BinarySearchTree
             {
                 if(data < currentNode->data)
                 {
-                    if(currentNode->left == nullptr)
+                    if(currentNode->left == nullptr) // if left child is free
                     {
                         Node* tempNode = new Node();
                         tempNode->data = data;
@@ -235,9 +221,9 @@ class BinarySearchTree
                  }
                  else
                  {
-                    Node* tempNode = minValue(helpnode->right);
+                    Node* tempNode = maxValue(helpnode->left);
                     helpnode->data= tempNode->data;
-                    helpnode->right = deleteData(helpnode->right,tempNode->data);
+                    helpnode->left = deleteData(helpnode->left,tempNode->data);
                  }
             }
             return helpnode;
@@ -269,111 +255,95 @@ class BinarySearchTree
         Node* heaightNode = root;
         int height = height2(heaightNode);
         return height;
-    }   
+    }
+    void clear(Node* node) {
+        if (!node)
+        {
+            return;
+        }
+        if (node->left)
+        {
+            clear(node->left);
+        }
+        if (node->right)
+        {
+            clear(node->right);
+        }
+        node = nullptr;
+        delete node;
+    }
+    ~BinarySearchTree()
+    {
+        clear(root);
+    }
 };
 bool testBinarySearchTree()
 {
     srand(time(NULL));
     const int iters = 80000;
     const int keysAmount = iters * 2;
-    const int itersToRangeQueries = 1000;
     vector<Data> data(keysAmount);
     vector<Data> dataToInsert(iters);
     vector<Data> dataToErase(iters);
     vector<Data> dataToFind(iters);
     vector<pair<Data, Data>> dataToRangeQueries;
-
-    for (int i = 0; i < iters; i++)
+    for (size_t i = 0; i < iters; i++)
     {
-    dataToInsert[i] = data[generateRandLong() % keysAmount];
-    dataToErase[i] = data[generateRandLong() % keysAmount];
-    dataToFind[i] = data[generateRandLong() % keysAmount];
-    }
-    for (int i = 0; i < itersToRangeQueries; i++)
-    {
-    Data minData = Data();
-    Data maxData = Data();
-    if (maxData < minData)
-    {
-    swap(minData, maxData);
-    }
-    dataToRangeQueries.push_back({minData, maxData});
+        dataToInsert[i] = data[generateRandLong() % keysAmount];
+        dataToErase[i] = data[generateRandLong() % keysAmount];
+        dataToFind[i] = data[generateRandLong() % keysAmount];
     }
     BinarySearchTree myTree;
     clock_t myStart = clock();
-    for (int i = 0; i < iters; i++)
+    for (size_t i = 0; i < iters; i++)
     {
-    myTree.insert(dataToInsert[i]);
+        myTree.insert(dataToInsert[i]);
     }
     int myInsertSize = myTree.size();
     int myTreeHeight = myTree.height();
     int optimalTreeHeight = log2(myInsertSize) + 1;
-    for (int i = 0; i < iters; i++)
+    for (size_t i = 0; i < iters; i++)
     {
-    myTree.erase(dataToErase[i]);
+        myTree.erase(dataToErase[i]);
     }
     int myEraseSize = myInsertSize - myTree.size();
     int myFoundAmount = 0;
-    for (int i = 0; i < iters; i++)
+    for (size_t i = 0; i < iters; i++)
     {
-    if (myTree.find(dataToFind[i]))
-    {
-    myFoundAmount++;
-    }
+        if (myTree.find(dataToFind[i]))
+        {
+            myFoundAmount++;
+        }
     }
     clock_t myEnd = clock();
     float myTime = (float(myEnd - myStart)) / CLOCKS_PER_SEC;
     set<Data> stlTree;
     clock_t stlStart = clock();
-    for (int i = 0; i < iters; i++)
+    for (size_t i = 0; i < iters; i++)
     {
-    stlTree.insert(dataToInsert[i]);
+        stlTree.insert(dataToInsert[i]);
     }
     int stlInsertSize = stlTree.size();
-    for (int i = 0; i < iters; i++)
+    for (size_t i = 0; i < iters; i++)
     {
-    stlTree.erase(dataToErase[i]);
+        stlTree.erase(dataToErase[i]);
     }
     int stlEraseSize = stlInsertSize - stlTree.size();
     int stlFoundAmount = 0;
     for (int i = 0; i < iters; i++)
     {
-    if (stlTree.find(dataToFind[i]) != stlTree.end())
-    {
-    stlFoundAmount++;
-    }
+        if (stlTree.find(dataToFind[i]) != stlTree.end())
+        {
+            stlFoundAmount++;
+        }
     }
     clock_t stlEnd = clock();
     float stlTime = (float(stlEnd - stlStart)) / CLOCKS_PER_SEC;
-
-    clock_t myRangeStart = clock();
-    int myRangeFoundAmount = 0;
-    /*for (int i = 0; i < itersToRangeQueries; i++)
-    {
-    myRangeFoundAmount += myTree.findInRange(dataToRangeQueries[i].first,
-    dataToRangeQueries[i].second);
-    */
-    clock_t myRangeEnd = clock();
-    float myRangeTime = (float(myRangeEnd - myRangeStart)) / CLOCKS_PER_SEC;
-    clock_t stlRangeStart = clock();
-    int stlRangeFoundAmount = 0;
-    for (int i = 0; i < itersToRangeQueries; i++)
-    {
-    const auto& low = stlTree.lower_bound(dataToRangeQueries[i].first);
-    const auto& up = stlTree.upper_bound(dataToRangeQueries[i].second);
-    stlRangeFoundAmount += distance(low, up);
-    }
-    clock_t stlRangeEnd = clock();
-    float stlRangeTime = (float(stlRangeEnd - stlRangeStart)) / CLOCKS_PER_SEC;
     cout << "My BinaryTree: height = " << myTreeHeight << ", optimal height = " <<
     optimalTreeHeight << endl;
     cout << "Time: " << myTime << ", size: " << myInsertSize << " - " << myEraseSize << ",found amount: " << myFoundAmount << endl;
-    cout << "Range time: " << myRangeTime << ", range found amount: "<< endl << endl;
     cout << "STL Tree:" << endl;
-    cout << "Time: " << stlTime << ", size: " << stlInsertSize << " - " << stlEraseSize <<
-    ", found amount: " << stlFoundAmount << endl;
-    cout << "Range time: " << stlRangeTime << ", range found amount: " <<
-    stlRangeFoundAmount << endl << endl;
+    cout << "Time: " << stlTime << ", size: " << stlInsertSize << " - " << stlEraseSize <<", found amount: " << stlFoundAmount << endl;
     if (myInsertSize == stlInsertSize && myEraseSize == stlEraseSize && myFoundAmount == stlFoundAmount)
     {
     cout << "The lab is completed" << endl;
